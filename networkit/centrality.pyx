@@ -140,6 +140,59 @@ cdef class Betweenness(Centrality):
 		"""
 		return (<_Betweenness*>(self._this)).edgeScores()
 
+cdef extern from "<networkit/centrality/ApproxEdgeBetweenness.hpp>":
+
+	cdef cppclass _ApproxEdgeBetweenness "NetworKit::ApproxEdgeBetweenness" (_Centrality):
+		_ApproxEdgeBetweenness(_Graph, double, double, double) except +
+		count numberOfSamples() except +
+		vector[double] edgeScores() except +
+
+cdef class ApproxEdgeBetweenness(Centrality):
+	""" Approximation of betweenness centrality according to algorithm described in
+ 	Matteo Riondato and Evgenios M. Kornaropoulos: Fast Approximation of Betweenness Centrality through Sampling
+
+ 	ApproxEdgeBetweenness(G, epsilon=0.01, delta=0.1, universalConstant=1.0)
+
+ 	The algorithm approximates the betweenness of all vertices so that the scores are
+	within an additive error epsilon with probability at least (1- delta).
+	The values are normalized by default. The run() method takes O(m) time per sample, where  m is
+	the number of edges of the graph. The number of samples is proportional to universalConstant/epsilon^2.
+	Although this algorithm has a theoretical guarantee, the algorithm implemented in Estimate Betweenness usually performs better in practice
+	Therefore, we recommend to use EstimateBetweenness if no theoretical guarantee is needed.
+
+	Parameters:
+	-----------
+	G : networkit.Graph
+		the graph
+	epsilon : double, optional
+		maximum additive error
+	delta : double, optional
+		probability that the values are within the error guarantee
+	universalConstant: double, optional
+		the universal constant to be used in computing the sample size.
+		It is 1 by default. Some references suggest using 0.5, but there
+		is no guarantee in this case.
+	"""
+
+	def __cinit__(self, Graph G, epsilon=0.01, delta=0.1, universalConstant=1.0):
+		self._G = G
+		self._this = new _ApproxEdgeBetweenness(G._this, epsilon, delta, universalConstant)
+
+	def edgeScores(self):
+		""" Get a vector containing the betweenness score for each edge in the graph
+		in ascending edge ID order.
+
+		Returns:
+		--------
+		vector
+			The betweenness scores calculated by run().
+		"""
+		return (<_ApproxEdgeBetweenness*>(self._this)).edgeScores()
+
+	def numberOfSamples(self):
+		return (<_ApproxEdgeBetweenness*>(self._this)).numberOfSamples()
+
+
 cdef extern from "<networkit/centrality/ApproxBetweenness.hpp>":
 
 	cdef cppclass _ApproxBetweenness "NetworKit::ApproxBetweenness" (_Centrality):
