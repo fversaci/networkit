@@ -104,7 +104,7 @@ cdef class Centrality(Algorithm):
 cdef extern from "<networkit/centrality/FastBetweenness.hpp>":
 
 	cdef cppclass _FastBetweenness "NetworKit::FastBetweenness" (_Centrality):
-		_FastBetweenness(_Graph, bool_t, bool_t) except +
+		_FastBetweenness(_Graph, bool_t, bool_t, double) except +
 		vector[double] edgeScores() except +
 
 cdef class FastBetweenness(Centrality):
@@ -125,9 +125,9 @@ cdef class FastBetweenness(Centrality):
 		Set this to true if edge betweenness scores should be computed as well.
 	"""
 
-	def __cinit__(self, Graph G, normalized=False, computeEdgeCentrality=False):
+	def __cinit__(self, Graph G, normalized=False, computeEdgeCentrality=False, sampling_rate=0.1):
 		self._G = G
-		self._this = new _FastBetweenness(G._this, normalized, computeEdgeCentrality)
+		self._this = new _FastBetweenness(G._this, normalized, computeEdgeCentrality, sampling_rate)
 
 
 	def edgeScores(self):

@@ -27,8 +27,9 @@ public:
      * @param normalized Set this parameter to <code>true</code> if scores should be normalized in the interval [0,1].
      * @param computeEdgeCentrality Set this parameter to <code>true</code> if edge betweenness should be computed as well.
      */
-    FastBetweenness(const Graph& G, bool normalized=false, bool computeEdgeCentrality=false);
-
+  FastBetweenness(const Graph& G, bool normalized=false, bool computeEdgeCentrality=false, double sampling_rate=0.1);
+  
+  double sampling_rate=0.1;
 
 
     /**

@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <omp.h>
+#include <algorithm>    // std::random_shuffle
 
 #include <networkit/centrality/FastBetweenness.hpp>
 #include <networkit/auxiliary/Log.hpp>
@@ -17,8 +18,8 @@
 
 namespace NetworKit {
 
-FastBetweenness::FastBetweenness(const Graph& G, bool normalized, bool computeEdgeCentrality) :
-    Centrality(G, normalized, computeEdgeCentrality) {}
+  FastBetweenness::FastBetweenness(const Graph& G, bool normalized, bool computeEdgeCentrality, double sampling_rate) :
+    Centrality(G, normalized, computeEdgeCentrality), sampling_rate(sampling_rate) {}
 
 void FastBetweenness::run() {
     Aux::SignalHandler handler;
@@ -82,8 +83,14 @@ void FastBetweenness::run() {
     handler.assureRunning();
     // G.balancedParallelForNodes(computeDependencies);
     /////////////////
+    std::vector<int> n_ids(z);
+    std::iota(std::begin(n_ids), std::end(n_ids), 0); // Fill with 0, 1, ..., z-1
+    std::random_shuffle(n_ids.begin(), n_ids.end());
+    int num_samples = z*sampling_rate;
+
 #pragma omp parallel for schedule(guided)
-    for (omp_index v = 0; v < static_cast<omp_index>(z); ++v) {
+    for (omp_index idx = 0; idx < static_cast<omp_index>(num_samples); ++idx) {
+      int v = n_ids[idx];
       if (G.hasNode(v)) {
             computeDependencies(v);
         }
@@ -97,13 +104,13 @@ void FastBetweenness::run() {
         const double pairs = (n-2.) * (n-1.);
         const double edges =  n    * (n-1.);
         G.parallelForNodes([&](node u){
-            scoreData[u] /= pairs;
+            scoreData[u] /= sampling_rate * pairs;
         });
 
         if (computeEdgeCentrality) {
 #pragma omp parallel for
             for (omp_index i = 0; i < static_cast<omp_index>(edgeScoreData.size()); ++i) {
-                edgeScoreData[i] =  edgeScoreData[i] / edges;
+  	        edgeScoreData[i] =  edgeScoreData[i] / (edges * sampling_rate);
             }
         }
     }
