@@ -100,6 +100,49 @@ cdef class Centrality(Algorithm):
 			raise RuntimeError("Error, object not properly initialized")
 		return (<_Centrality*>(self._this)).centralization()
 
+######################
+cdef extern from "<networkit/centrality/FastBetweenness.hpp>":
+
+	cdef cppclass _FastBetweenness "NetworKit::FastBetweenness" (_Centrality):
+		_FastBetweenness(_Graph, bool_t, bool_t) except +
+		vector[double] edgeScores() except +
+
+cdef class FastBetweenness(Centrality):
+	"""
+	FastBetweenness(G, normalized=False, computeEdgeCentrality=False)
+
+	Constructs (a quickly samples) Betweenness class for the given Graph `G`. If the betweenness scores should be normalized,
+	then set `normalized` to True. The run() method takes O(nm) time, where n is the number
+ 	of nodes and m is the number of edges of the graph.
+
+ 	Parameters:
+ 	-----------
+ 	G : networkit.Graph
+ 		The graph.
+ 	normalized : bool, optional
+ 		Set this parameter to True if scores should be normalized in the interval [0,1].
+	computeEdgeCentrality: bool, optional
+		Set this to true if edge betweenness scores should be computed as well.
+	"""
+
+	def __cinit__(self, Graph G, normalized=False, computeEdgeCentrality=False):
+		self._G = G
+		self._this = new _FastBetweenness(G._this, normalized, computeEdgeCentrality)
+
+
+	def edgeScores(self):
+		""" Get a vector containing the betweenness score for each edge in the graph
+		in ascending edge ID order.
+
+		Returns:
+		--------
+		vector
+			The betweenness scores calculated by run().
+		"""
+		return (<_FastBetweenness*>(self._this)).edgeScores()
+
+######################
+
 cdef extern from "<networkit/centrality/Betweenness.hpp>":
 
 	cdef cppclass _Betweenness "NetworKit::Betweenness" (_Centrality):
